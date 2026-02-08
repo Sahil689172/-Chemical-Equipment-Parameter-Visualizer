@@ -1,0 +1,15 @@
+.equipment-chart-container {
+  background: white;
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.equipment-chart-container h2 {
+  margin-top: 0;
+  color: #333;
+}
+
+.chart-wrapper {
+  margin-top: 1rem;
+}

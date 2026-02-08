@@ -1,0 +1,21 @@
+Equipment Name,Type,Flowrate,Pressure,Temperature
+Reactor R-101,Continuous Stirred Tank Reactor,450.5,8.2,125.0
+Distillation Column DC-201,Distillation Column,320.0,2.5,85.5
+Heat Exchanger HE-301,Shell and Tube Heat Exchanger,280.75,5.8,95.0
+Pump P-401,Centrifugal Pump,550.0,12.5,45.0
+Compressor C-501,Centrifugal Compressor,180.25,25.0,120.0
+Absorber AB-601,Packed Column Absorber,220.0,3.2,65.0
+Evaporator EV-701,Forced Circulation Evaporator,380.5,1.8,110.0
+Crystallizer CR-801,Forced Circulation Crystallizer,195.0,1.2,75.5
+Filter F-901,Plate and Frame Filter,150.25,4.5,50.0
+Dryer DR-1001,Spray Dryer,275.0,1.0,180.0
+Mixer M-1101,Static Mixer,425.5,6.8,55.0
+Separator S-1201,Gravity Separator,310.0,2.0,40.0
+Scrubber SC-1301,Venturi Scrubber,165.75,1.5,35.0
+Cooler CO-1401,Air Cooler,290.0,3.5,25.0
+Heater HT-1501,Shell and Tube Heater,340.25,7.2,200.0
+Extractor EX-1601,Liquid-Liquid Extractor,185.0,2.8,60.0
+Adsorber AD-1701,Activated Carbon Adsorber,135.5,1.2,30.0
+Membrane Module MM-1801,Reverse Osmosis Membrane,245.0,15.0,25.0
+Furnace F-1901,Process Furnace,195.75,0.8,450.0
+Tower T-2001,Packed Tower,360.0,4.2,70.0

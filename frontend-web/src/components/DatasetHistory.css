@@ -1,0 +1,213 @@
+.dataset-history-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #333333;
+}
+
+.history-header h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  animation: fadeInText 0.6s ease-out;
+}
+
+.history-count {
+  font-size: 0.75rem;
+  color: #b0b0b0;
+  font-weight: 500;
+}
+
+.dataset-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.dataset-card {
+  background: #0f0f0f;
+  border: 2px solid #333333;
+  border-radius: 8px;
+  padding: 0;
+  transition: all 0.3s ease;
+  animation: slideInRight 0.5s ease-out backwards;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dataset-content {
+  flex: 1;
+  padding: 1rem;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.dataset-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+  transition: left 0.5s;
+}
+
+.dataset-card:hover .dataset-content::before {
+  left: 100%;
+}
+
+.dataset-card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.dataset-card:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.dataset-card:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.dataset-card:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+.dataset-card:nth-child(5) {
+  animation-delay: 0.5s;
+}
+
+.dataset-card:hover {
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.dataset-card:hover .dataset-content {
+  background: #1a1a1a;
+}
+
+.dataset-card:hover .delete-button {
+  opacity: 1;
+}
+
+.dataset-card.selected {
+  border-color: #667eea;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.dataset-card.selected .dataset-content {
+  background: rgba(102, 126, 234, 0.15);
+}
+
+.dataset-filename {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+  word-break: break-word;
+}
+
+.dataset-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  color: #b0b0b0;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.dataset-items {
+  font-weight: 500;
+}
+
+.dataset-date {
+  color: #a0aec0;
+}
+
+.view-all-button {
+  width: 100%;
+  padding: 0.75rem;
+  margin-top: 1.5rem;
+  background: #0f0f0f;
+  border: 1px solid #333333;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #ffffff;
+  transition: all 0.3s ease;
+  animation: fadeInUp 0.6s ease-out 0.3s backwards;
+}
+
+.view-all-button:hover {
+  background: #1a1a1a;
+  border-color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.2);
+}
+
+.delete-button {
+  background: rgba(255, 99, 99, 0.1);
+  border: none;
+  border-left: 1px solid #333333;
+  color: #ff6363;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
+  opacity: 0.6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 50px;
+}
+
+.delete-button:hover {
+  background: rgba(255, 99, 99, 0.2);
+  color: #ff4444;
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.delete-button:active {
+  transform: scale(0.95);
+}
+
+.loading-message,
+.empty-message {
+  text-align: center;
+  padding: 2rem;
+  color: #b0b0b0;
+  font-size: 0.9rem;
+}

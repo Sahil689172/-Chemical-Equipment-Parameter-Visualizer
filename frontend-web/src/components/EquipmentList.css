@@ -1,0 +1,43 @@
+.equipment-list-container {
+  background: white;
+  border-radius: 8px;
+  padding: 2rem;
+  margin-top: 2rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.equipment-list-container h2 {
+  margin-top: 0;
+  color: #333;
+}
+
+.equipment-table-wrapper {
+  overflow-x: auto;
+}
+
+.equipment-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.equipment-table th {
+  background-color: #667eea;
+  color: white;
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+}
+
+.equipment-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.equipment-table tbody tr:hover {
+  background-color: #f5f5f5;
+}
+
+.equipment-table tbody tr:last-child td {
+  border-bottom: none;
+}
