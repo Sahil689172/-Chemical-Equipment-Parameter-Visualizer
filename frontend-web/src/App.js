@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Header from './components/Header';
+import Login from './components/Login';
+import Register from './components/Register';
 import UploadForm from './components/UploadForm';
 import DatasetHistory from './components/DatasetHistory';
 import Summary from './components/Summary';
 import ChartDisplay from './components/ChartDisplay';
 import DataTable from './components/DataTable';
+import { logout } from './services/api';
 import {
   getDatasets,
   getDatasetSummary,
@@ -15,6 +18,9 @@ import {
 import './App.css';
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
+  const [user, setUser] = useState(null);
   const [datasets, setDatasets] = useState([]);
   const [selectedDataset, setSelectedDataset] = useState(null);
   const [summary, setSummary] = useState(null);
@@ -22,6 +28,16 @@ function App() {
   const [equipmentItems, setEquipmentItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Check authentication on mount
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    const userData = localStorage.getItem('user');
+    if (token && userData) {
+      setIsAuthenticated(true);
+      setUser(JSON.parse(userData));
+    }
+  }, []);
 
   const loadDatasets = useCallback(async () => {
     try {
@@ -42,22 +58,24 @@ function App() {
     }
   }, [selectedDataset]);
 
-  // Load datasets on mount and when upload succeeds
+  // Load datasets on mount and when upload succeeds (only if authenticated)
   useEffect(() => {
-    loadDatasets();
-  }, [loadDatasets]);
-
-  // Load selected dataset details
-  useEffect(() => {
-    if (selectedDataset) {
-      loadDatasetDetails(selectedDataset);
+    if (isAuthenticated) {
+      loadDatasets();
     } else {
-      // If no dataset selected, try to select the first one
-      if (datasets.length > 0 && !selectedDataset) {
-        setSelectedDataset(datasets[0].id);
-      }
+      setLoading(false);
     }
-  }, [selectedDataset, datasets]);
+  }, [loadDatasets, isAuthenticated]);
+
+  // Load selected dataset details (only if authenticated)
+  useEffect(() => {
+    if (isAuthenticated && selectedDataset) {
+      loadDatasetDetails(selectedDataset);
+    } else if (isAuthenticated && datasets.length > 0 && !selectedDataset) {
+      // If no dataset selected, try to select the first one
+      setSelectedDataset(datasets[0].id);
+    }
+  }, [selectedDataset, datasets, isAuthenticated]);
 
   const loadDatasetDetails = async (datasetId) => {
     try {
@@ -125,9 +143,56 @@ function App() {
     }
   };
 
+  const handleLoginSuccess = (userData) => {
+    setIsAuthenticated(true);
+    setUser(userData);
+    setShowRegister(false);
+  };
+
+  const handleRegisterSuccess = (userData) => {
+    setIsAuthenticated(true);
+    setUser(userData);
+    setShowRegister(false);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (err) {
+      console.error('Logout error:', err);
+    } finally {
+      setIsAuthenticated(false);
+      setUser(null);
+      setDatasets([]);
+      setSelectedDataset(null);
+      setSummary(null);
+      setChartData(null);
+      setEquipmentItems([]);
+    }
+  };
+
+  // Show login/register if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="App">
+        {showRegister ? (
+          <Register
+            onRegisterSuccess={handleRegisterSuccess}
+            onSwitchToLogin={() => setShowRegister(false)}
+          />
+        ) : (
+          <Login
+            onLoginSuccess={handleLoginSuccess}
+            onSwitchToRegister={() => setShowRegister(true)}
+          />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="App">
-      <Header />
+      <Header user={user} onLogout={handleLogout} />
       <main className="App-main">
         {error && <div className="error-banner">{error}</div>}
         

@@ -1,7 +1,7 @@
 import React from 'react';
 import './Header.css';
 
-function Header() {
+function Header({ user, onLogout }) {
   return (
     <header className="app-header">
       <div className="header-left">
@@ -19,6 +19,16 @@ function Header() {
       </div>
       
       <div className="header-right">
+        {user && (
+          <div className="user-info">
+            <span className="user-name">
+              {user.first_name || user.username}
+            </span>
+            <button className="logout-button" onClick={onLogout}>
+              Logout
+            </button>
+          </div>
+        )}
         <div className="status-indicator">
           <span className="status-icon">✓</span>
           <span className="status-text">SYSTEM ONLINE</span>

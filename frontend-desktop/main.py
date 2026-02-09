@@ -16,6 +16,8 @@ from ui.upload_widget import UploadWidget
 from ui.table_widget import TableWidget
 from ui.chart_widget import ChartWidget
 from ui.history_widget import HistoryWidget
+from ui.login_dialog import LoginDialog
+from ui.register_dialog import RegisterDialog
 
 
 class MainWindow(QMainWindow):
@@ -25,7 +27,16 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.api_client = APIClient()
         self.current_dataset_id = None
-        self.init_ui()
+        self.user = None
+        
+        # Check authentication
+        if not self.api_client.is_authenticated():
+            # Don't show main window until authenticated
+            self.hide()
+            self.show_login()
+        else:
+            self.init_ui()
+            self.show()
     
     def init_ui(self):
         self.setWindowTitle("Chemical Equipment Parameter Visualizer")
@@ -149,6 +160,13 @@ class MainWindow(QMainWindow):
         
         # File menu
         file_menu = menubar.addMenu('File')
+        
+        # Logout action
+        logout_action = QAction('Logout', self)
+        logout_action.setShortcut('Ctrl+L')
+        logout_action.triggered.connect(self.handle_logout)
+        file_menu.addAction(logout_action)
+        file_menu.addSeparator()
         
         upload_action = QAction('Upload CSV...', self)
         upload_action.setShortcut(QKeySequence('Ctrl+U'))
@@ -349,6 +367,144 @@ class MainWindow(QMainWindow):
         self.history_widget.load_datasets()
         self.statusBar().showMessage("Data refreshed", 2000)
     
+    def show_login(self):
+        """Show login dialog"""
+        login_dialog = LoginDialog(self)
+        login_dialog.login_success.connect(self.handle_login)
+        login_dialog.registration_complete.connect(self.handle_register)
+        login_dialog.exec_()
+    
+    def handle_login(self, credentials):
+        """Handle login from dialog signal"""
+        try:
+            response = self.api_client.login(credentials['username'], credentials['password'])
+            self.user = response.get('user')
+            if not hasattr(self, 'tabs') or self.tabs is None:
+                self.init_ui()
+            self.show()
+        except Exception as e:
+            msg_box = QMessageBox(self)
+            msg_box.setIcon(QMessageBox.Critical)
+            msg_box.setWindowTitle("Login Error")
+            msg_box.setText("Login failed:")
+            error_msg = str(e)
+            if hasattr(e, 'response') and hasattr(e.response, 'text'):
+                try:
+                    import json
+                    error_data = json.loads(e.response.text)
+                    if isinstance(error_data, dict):
+                        error_msg = '\n'.join([f"{k}: {', '.join(v) if isinstance(v, list) else v}" for k, v in error_data.items()])
+                except:
+                    pass
+            msg_box.setInformativeText(error_msg)
+            msg_box.setStyleSheet("""
+                QMessageBox {
+                    background: #1a1a1a;
+                    color: #ffffff;
+                }
+                QMessageBox QLabel {
+                    color: #ffffff;
+                    background: #1a1a1a;
+                }
+                QMessageBox QPushButton {
+                    background: #ff4444;
+                    color: #ffffff;
+                    border: none;
+                    border-radius: 6px;
+                    padding: 8px 20px;
+                    font-weight: bold;
+                }
+                QMessageBox QPushButton:hover {
+                    background: #cc0000;
+                }
+            """)
+            msg_box.exec_()
+            self.show_login()  # Show login again
+    
+    def handle_register(self, user_data):
+        """Handle registration from dialog"""
+        try:
+            response = self.api_client.register(user_data)
+            self.user = response.get('user')
+            if not hasattr(self, 'tabs') or self.tabs is None:
+                self.init_ui()
+            self.show()
+            
+            # Show success message
+            msg_box = QMessageBox(self)
+            msg_box.setIcon(QMessageBox.Information)
+            msg_box.setWindowTitle("Registration Successful")
+            msg_box.setText("Registration successful!")
+            msg_box.setInformativeText(f"Welcome, {self.user.get('username', 'User')}!")
+            msg_box.setStyleSheet("""
+                QMessageBox {
+                    background: #1a1a1a;
+                    color: #ffffff;
+                }
+                QMessageBox QLabel {
+                    color: #ffffff;
+                    background: #1a1a1a;
+                }
+                QMessageBox QPushButton {
+                    background: #48bb78;
+                    color: #ffffff;
+                    border: none;
+                    border-radius: 6px;
+                    padding: 8px 20px;
+                    font-weight: bold;
+                }
+                QMessageBox QPushButton:hover {
+                    background: #38a169;
+                }
+            """)
+            msg_box.exec_()
+        except Exception as e:
+            msg_box = QMessageBox(self)
+            msg_box.setIcon(QMessageBox.Critical)
+            msg_box.setWindowTitle("Registration Error")
+            msg_box.setText("Registration failed:")
+            error_msg = str(e)
+            if hasattr(e, 'response') and hasattr(e.response, 'text'):
+                try:
+                    import json
+                    error_data = json.loads(e.response.text)
+                    if isinstance(error_data, dict):
+                        error_msg = '\n'.join([f"{k}: {', '.join(v) if isinstance(v, list) else v}" for k, v in error_data.items()])
+                except:
+                    pass
+            msg_box.setInformativeText(error_msg)
+            msg_box.setStyleSheet("""
+                QMessageBox {
+                    background: #1a1a1a;
+                    color: #ffffff;
+                }
+                QMessageBox QLabel {
+                    color: #ffffff;
+                    background: #1a1a1a;
+                }
+                QMessageBox QPushButton {
+                    background: #ff4444;
+                    color: #ffffff;
+                    border: none;
+                    border-radius: 6px;
+                    padding: 8px 20px;
+                    font-weight: bold;
+                }
+                QMessageBox QPushButton:hover {
+                    background: #cc0000;
+                }
+            """)
+            msg_box.exec_()
+            self.show_login()  # Show login again on error
+    
+    def handle_logout(self):
+        """Handle logout"""
+        self.api_client.logout()
+        self.user = None
+        self.current_dataset_id = None
+        self.close()
+        self.show_login()
+    
     def show_about(self):
         """Show about dialog"""
         msg_box = QMessageBox(self)
@@ -387,7 +543,11 @@ def main():
     app.setStyle('Fusion')  # Use Fusion style for modern look
     
     window = MainWindow()
-    window.show()
+    # Window will show login dialog if not authenticated
+    # If authenticated, show main window
+    if window.api_client.is_authenticated():
+        window.show()
+    # Otherwise login dialog will be shown in __init__
     
     sys.exit(app.exec_())
 

@@ -2,13 +2,19 @@ import pandas as pd
 from collections import defaultdict
 from django.db import models, transaction
 from django.db.models import Avg, Max, Min, Count
+from django.contrib.auth.models import User
 from rest_framework import viewsets, status
-from rest_framework.decorators import action, parser_classes
+from rest_framework.decorators import action, parser_classes, permission_classes
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.authtoken.models import Token
 from .models import EquipmentDataset, EquipmentItem
-from .serializers import EquipmentDatasetSerializer, EquipmentItemSerializer
+from .serializers import (
+    EquipmentDatasetSerializer, EquipmentItemSerializer,
+    UserRegistrationSerializer, UserLoginSerializer, UserSerializer
+)
 
 
 class EquipmentDatasetViewSet(viewsets.ModelViewSet):
@@ -17,6 +23,7 @@ class EquipmentDatasetViewSet(viewsets.ModelViewSet):
     """
     queryset = EquipmentDataset.objects.all().order_by('-uploaded_at')
     serializer_class = EquipmentDatasetSerializer
+    permission_classes = [IsAuthenticated]
 
     def list(self, request, *args, **kwargs):
         """
@@ -151,6 +158,7 @@ class EquipmentItemViewSet(viewsets.ModelViewSet):
     """
     queryset = EquipmentItem.objects.all()
     serializer_class = EquipmentItemSerializer
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         """Optionally filter by dataset"""
@@ -175,6 +183,7 @@ class EquipmentItemViewSet(viewsets.ModelViewSet):
 
 
 class UploadCSVView(APIView):
+    permission_classes = [IsAuthenticated]
     """
     API endpoint for uploading and parsing CSV files containing equipment data.
     """
@@ -354,3 +363,75 @@ class UploadCSVView(APIView):
                 {'error': f'An error occurred while processing the file: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class RegisterView(APIView):
+    """User registration endpoint"""
+    permission_classes = [AllowAny]
+    
+    def get(self, request):
+        """Return endpoint information for testing"""
+        return Response({
+            'message': 'Registration endpoint is working',
+            'method': 'POST',
+            'required_fields': ['username', 'email', 'password', 'password_confirm'],
+            'optional_fields': ['first_name', 'last_name']
+        }, status=status.HTTP_200_OK)
+    
+    def post(self, request):
+        serializer = UserRegistrationSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            token, created = Token.objects.get_or_create(user=user)
+            return Response({
+                'message': 'User registered successfully',
+                'token': token.key,
+                'user': UserSerializer(user).data
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class LoginView(APIView):
+    """User login endpoint"""
+    permission_classes = [AllowAny]
+    
+    def get(self, request):
+        """Return endpoint information for testing"""
+        return Response({
+            'message': 'Login endpoint is working',
+            'method': 'POST',
+            'required_fields': ['username', 'password']
+        }, status=status.HTTP_200_OK)
+    
+    def post(self, request):
+        serializer = UserLoginSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.validated_data['user']
+            token, created = Token.objects.get_or_create(user=user)
+            return Response({
+                'message': 'Login successful',
+                'token': token.key,
+                'user': UserSerializer(user).data
+            }, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class LogoutView(APIView):
+    """User logout endpoint"""
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        try:
+            request.user.auth_token.delete()
+            return Response({'message': 'Logout successful'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserProfileView(APIView):
+    """Get current user profile"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
