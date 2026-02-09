@@ -11,7 +11,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import { Bar, Line, Pie, Doughnut } from 'react-chartjs-2';
+import { Bar, Line, Pie, Doughnut, Scatter } from 'react-chartjs-2';
 import './ChartDisplay.css';
 
 // Register all Chart.js components
@@ -79,34 +79,6 @@ const generatePieColors = (count) => {
 };
 
 function ChartDisplay({ chartData, equipmentItems, loading }) {
-  // Prepare data for line chart (pressure vs temperature) - MUST be before early returns
-  const lineChartData = useMemo(() => {
-    if (!equipmentItems || equipmentItems.length === 0) return null;
-    
-    const data = equipmentItems.map(item => ({
-      x: item.pressure,
-      y: item.temperature,
-      label: item.equipment_name,
-    }));
-    
-    return {
-      datasets: [
-        {
-          label: 'Pressure vs Temperature',
-          data: data,
-          backgroundColor: colors.blue.bg,
-          borderColor: colors.blue.border,
-          borderWidth: 2,
-          pointRadius: 5,
-          pointHoverRadius: 7,
-          pointBackgroundColor: colors.blue.border,
-          pointBorderColor: '#fff',
-          pointBorderWidth: 2,
-        },
-      ],
-    };
-  }, [equipmentItems]);
-
   // Donut chart data - Equipment Type Distribution - MUST be before early returns
   const donutChartData = useMemo(() => {
     if (!equipmentItems || equipmentItems.length === 0) return null;
@@ -130,6 +102,34 @@ function ChartDisplay({ chartData, equipmentItems, loading }) {
           backgroundColor: bgColors,
           borderColor: borderColors,
           borderWidth: 2,
+        },
+      ],
+    };
+  }, [equipmentItems]);
+
+  // Scatter chart data - Pressure vs Temperature - MUST be before early returns
+  const scatterChartData = useMemo(() => {
+    if (!equipmentItems || equipmentItems.length === 0) return null;
+    
+    const data = equipmentItems.map(item => ({
+      x: item.pressure,
+      y: item.temperature,
+      label: item.equipment_name,
+    }));
+    
+    return {
+      datasets: [
+        {
+          label: 'Equipment Points',
+          data: data,
+          backgroundColor: colors.orange.bg,
+          borderColor: colors.orange.border,
+          borderWidth: 2,
+          pointRadius: 6,
+          pointHoverRadius: 8,
+          pointBackgroundColor: colors.orange.border,
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
         },
       ],
     };
@@ -167,6 +167,20 @@ function ChartDisplay({ chartData, equipmentItems, loading }) {
     ],
   };
 
+  // Bar chart data - Average Pressure by Equipment Type
+  const pressureBarChartData = {
+    labels: chartData.labels,
+    datasets: [
+      {
+        label: 'Average Pressure (bar)',
+        data: chartData.pressure,
+        backgroundColor: colors.purple.bg,
+        borderColor: colors.purple.border,
+        borderWidth: 2,
+      },
+    ],
+  };
+
   // Common chart options
   const commonOptions = {
     responsive: true,
@@ -180,20 +194,23 @@ function ChartDisplay({ chartData, equipmentItems, loading }) {
             size: 12,
             weight: '500',
           },
+          color: '#ffffff',
           usePointStyle: true,
         },
       },
       tooltip: {
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        backgroundColor: 'rgba(0, 0, 0, 0.9)',
         padding: 12,
         titleFont: {
           size: 14,
           weight: 'bold',
         },
+        titleColor: '#ffffff',
         bodyFont: {
           size: 12,
         },
-        borderColor: 'rgba(255, 255, 255, 0.1)',
+        bodyColor: '#ffffff',
+        borderColor: 'rgba(255, 255, 255, 0.2)',
         borderWidth: 1,
         cornerRadius: 8,
         displayColors: true,
@@ -228,11 +245,16 @@ function ChartDisplay({ chartData, equipmentItems, loading }) {
             size: 12,
             weight: 'bold',
           },
+          color: '#ffffff',
         },
         ticks: {
+          color: '#b0b0b0',
           callback: function(value) {
             return value.toFixed(0);
           },
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)',
         },
       },
       x: {
@@ -243,27 +265,84 @@ function ChartDisplay({ chartData, equipmentItems, loading }) {
             size: 12,
             weight: 'bold',
           },
+          color: '#ffffff',
+        },
+        ticks: {
+          color: '#b0b0b0',
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)',
         },
       },
     },
   };
 
-  // Line chart options
-  const lineChartOptions = {
+  // Pressure bar chart options
+  const pressureBarChartOptions = {
     ...commonOptions,
     plugins: {
       ...commonOptions.plugins,
       title: {
-        display: true,
-        text: 'Pressure vs Temperature',
-        font: {
-          size: 16,
-          weight: 'bold',
+        display: false,
+      },
+      tooltip: {
+        ...commonOptions.plugins.tooltip,
+        callbacks: {
+          label: function(context) {
+            return `Pressure: ${context.parsed.y.toFixed(2)} bar`;
+          },
         },
-        padding: {
-          top: 10,
-          bottom: 20,
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: 'Pressure (bar)',
+          font: {
+            size: 12,
+            weight: 'bold',
+          },
+          color: '#ffffff',
         },
+        ticks: {
+          color: '#b0b0b0',
+          callback: function(value) {
+            return value.toFixed(1);
+          },
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)',
+        },
+      },
+      x: {
+        title: {
+          display: true,
+          text: 'Equipment Type',
+          font: {
+            size: 12,
+            weight: 'bold',
+          },
+          color: '#ffffff',
+        },
+        ticks: {
+          color: '#b0b0b0',
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)',
+        },
+      },
+    },
+  };
+
+  // Scatter chart options
+  const scatterChartOptions = {
+    ...commonOptions,
+    plugins: {
+      ...commonOptions.plugins,
+      title: {
+        display: false,
       },
       tooltip: {
         ...commonOptions.plugins.tooltip,
@@ -291,6 +370,13 @@ function ChartDisplay({ chartData, equipmentItems, loading }) {
             size: 12,
             weight: 'bold',
           },
+          color: '#ffffff',
+        },
+        ticks: {
+          color: '#b0b0b0',
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)',
         },
       },
       y: {
@@ -301,6 +387,13 @@ function ChartDisplay({ chartData, equipmentItems, loading }) {
             size: 12,
             weight: 'bold',
           },
+          color: '#ffffff',
+        },
+        ticks: {
+          color: '#b0b0b0',
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)',
         },
       },
     },
@@ -324,6 +417,7 @@ function ChartDisplay({ chartData, equipmentItems, loading }) {
           font: {
             size: 11,
           },
+          color: '#ffffff',
         },
       },
       tooltip: {
@@ -358,6 +452,28 @@ function ChartDisplay({ chartData, equipmentItems, loading }) {
           {donutChartData ? (
             <div className="chart-wrapper donut-wrapper">
               <Doughnut data={donutChartData} options={donutChartOptions} />
+            </div>
+          ) : (
+            <div className="chart-placeholder">
+              <p>No equipment data available</p>
+            </div>
+          )}
+        </div>
+
+        {/* Bar Chart - Pressure Distribution */}
+        <div className="chart-card">
+          <h3 className="chart-title">Pressure Distribution</h3>
+          <div className="chart-wrapper">
+            <Bar data={pressureBarChartData} options={pressureBarChartOptions} />
+          </div>
+        </div>
+
+        {/* Scatter Chart - Pressure vs Temperature */}
+        <div className="chart-card">
+          <h3 className="chart-title">Pressure vs Temperature</h3>
+          {scatterChartData ? (
+            <div className="chart-wrapper">
+              <Scatter data={scatterChartData} options={scatterChartOptions} />
             </div>
           ) : (
             <div className="chart-placeholder">

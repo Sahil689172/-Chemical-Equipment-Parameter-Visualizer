@@ -46,41 +46,70 @@ class UploadWidget(QWidget):
     
     def init_ui(self):
         layout = QVBoxLayout()
-        layout.setSpacing(15)
+        layout.setSpacing(20)
+        layout.setContentsMargins(30, 30, 30, 30)
+        
+        # Set dark background
+        self.setStyleSheet("background-color: #0f0f0f;")
         
         # Title
-        title = QLabel("Upload Equipment Data")
-        title.setStyleSheet("font-size: 18px; font-weight: bold; color: #2d3748;")
+        title = QLabel("📤 Upload Equipment Data")
+        title.setStyleSheet("""
+            font-size: 24px; 
+            font-weight: bold; 
+            color: #ffffff;
+            padding: 10px;
+        """)
         layout.addWidget(title)
+        
+        # Subtitle
+        subtitle = QLabel("Select a CSV file to upload and analyze equipment parameters")
+        subtitle.setStyleSheet("""
+            font-size: 12px; 
+            color: #cccccc;
+            padding-bottom: 20px;
+        """)
+        layout.addWidget(subtitle)
         
         # File selection section
         file_layout = QHBoxLayout()
         
         self.file_path_edit = QLineEdit()
-        self.file_path_edit.setPlaceholderText("No file selected...")
+        self.file_path_edit.setPlaceholderText("No file selected... Click Browse to select a CSV file")
         self.file_path_edit.setReadOnly(True)
         self.file_path_edit.setStyleSheet("""
             QLineEdit {
-                padding: 8px;
-                border: 2px solid #cbd5e0;
-                border-radius: 6px;
-                background: white;
+                padding: 12px;
+                border: 2px solid #777777;
+                border-radius: 8px;
+                background: #353535;
+                color: #ffffff;
+                font-size: 13px;
+            }
+            QLineEdit:focus {
+                border: 2px solid #667eea;
+                background: #404040;
             }
         """)
         file_layout.addWidget(self.file_path_edit)
         
-        browse_btn = QPushButton("Browse...")
+        browse_btn = QPushButton("📁 Browse...")
         browse_btn.setStyleSheet("""
             QPushButton {
-                padding: 8px 20px;
+                padding: 12px 25px;
                 background: #667eea;
                 color: white;
                 border: none;
-                border-radius: 6px;
+                border-radius: 8px;
                 font-weight: bold;
+                font-size: 13px;
             }
             QPushButton:hover {
                 background: #5568d3;
+                transform: scale(1.05);
+            }
+            QPushButton:pressed {
+                background: #4458c2;
             }
         """)
         browse_btn.clicked.connect(self.browse_file)
@@ -89,22 +118,23 @@ class UploadWidget(QWidget):
         layout.addLayout(file_layout)
         
         # Upload button
-        self.upload_btn = QPushButton("Upload CSV")
+        self.upload_btn = QPushButton("⬆ Upload CSV")
         self.upload_btn.setStyleSheet("""
             QPushButton {
-                padding: 12px;
-                background: #48bb78;
+                padding: 15px;
+                background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
                 color: white;
                 border: none;
-                border-radius: 6px;
-                font-size: 14px;
+                border-radius: 8px;
+                font-size: 16px;
                 font-weight: bold;
             }
             QPushButton:hover {
-                background: #38a169;
+                background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
             }
             QPushButton:disabled {
-                background: #a0aec0;
+                background: #444444;
+                color: #888888;
             }
         """)
         self.upload_btn.setEnabled(False)
@@ -116,24 +146,45 @@ class UploadWidget(QWidget):
         self.progress_bar.setRange(0, 100)
         self.progress_bar.setValue(0)
         self.progress_bar.setVisible(False)
+        self.progress_bar.setTextVisible(True)
+        self.progress_bar.setFormat("Uploading... %p%")
         self.progress_bar.setStyleSheet("""
             QProgressBar {
-                border: 2px solid #cbd5e0;
-                border-radius: 6px;
+                border: 2px solid #444444;
+                border-radius: 8px;
                 text-align: center;
-                height: 25px;
+                height: 30px;
+                background: #1a1a1a;
+                color: #ffffff;
+                font-weight: bold;
             }
             QProgressBar::chunk {
-                background: #667eea;
-                border-radius: 4px;
+                background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+                border-radius: 6px;
             }
         """)
         layout.addWidget(self.progress_bar)
         
         # Status label
         self.status_label = QLabel("")
-        self.status_label.setStyleSheet("color: #718096; padding: 5px;")
+        self.status_label.setStyleSheet("""
+            color: #cccccc; 
+            padding: 10px;
+            font-size: 13px;
+        """)
         layout.addWidget(self.status_label)
+        
+        # Info box
+        info_box = QLabel("📋 CSV Format: Equipment Name, Type, Flowrate, Pressure, Temperature")
+        info_box.setStyleSheet("""
+            background: #2a2a2a;
+            border-left: 4px solid #667eea;
+            padding: 12px;
+            border-radius: 6px;
+            color: #ffffff;
+            font-size: 12px;
+        """)
+        layout.addWidget(info_box)
         
         layout.addStretch()
         self.setLayout(layout)
@@ -152,30 +203,85 @@ class UploadWidget(QWidget):
             self.file_path_edit.setText(file_path)
             self.upload_btn.setEnabled(True)
             self.status_label.setText("")
-            self.status_label.setStyleSheet("color: #718096; padding: 5px;")
+            self.status_label.setStyleSheet("""
+                color: #b0b0b0; 
+                padding: 10px;
+                font-size: 13px;
+            """)
     
     def upload_file(self):
         """Upload the selected CSV file to the backend"""
         if not self.selected_file:
-            QMessageBox.warning(self, "No File", "Please select a CSV file first.")
+            msg_box = QMessageBox(self)
+            msg_box.setIcon(QMessageBox.Warning)
+            msg_box.setWindowTitle("No File")
+            msg_box.setText("Please select a CSV file first.")
+            msg_box.setStyleSheet("""
+                QMessageBox {
+                    background: #1a1a1a;
+                    color: #ffffff;
+                }
+                QMessageBox QLabel {
+                    color: #ffffff;
+                    background: #1a1a1a;
+                }
+                QMessageBox QPushButton {
+                    background: #667eea;
+                    color: #ffffff;
+                    border: none;
+                    border-radius: 6px;
+                    padding: 8px 20px;
+                    font-weight: bold;
+                }
+                QMessageBox QPushButton:hover {
+                    background: #5568d3;
+                }
+            """)
+            msg_box.exec_()
             return
         
         # Test connection first
         if not self.api_client.test_connection():
-            QMessageBox.critical(
-                self,
-                "Connection Error",
-                "Cannot connect to the backend API.\n"
-                "Please make sure the Django server is running on http://localhost:8000"
-            )
+            msg_box = QMessageBox(self)
+            msg_box.setIcon(QMessageBox.Critical)
+            msg_box.setWindowTitle("Connection Error")
+            msg_box.setText("Cannot connect to the backend API.")
+            msg_box.setInformativeText("Please make sure the Django server is running on http://localhost:8000")
+            msg_box.setStyleSheet("""
+                QMessageBox {
+                    background: #1a1a1a;
+                    color: #ffffff;
+                }
+                QMessageBox QLabel {
+                    color: #ffffff;
+                    background: #1a1a1a;
+                }
+                QMessageBox QPushButton {
+                    background: #667eea;
+                    color: #ffffff;
+                    border: none;
+                    border-radius: 6px;
+                    padding: 8px 20px;
+                    font-weight: bold;
+                }
+                QMessageBox QPushButton:hover {
+                    background: #5568d3;
+                }
+            """)
+            msg_box.exec_()
             return
         
         # Disable upload button and show progress
         self.upload_btn.setEnabled(False)
         self.progress_bar.setVisible(True)
         self.progress_bar.setValue(0)
-        self.status_label.setText("Uploading...")
-        self.status_label.setStyleSheet("color: #667eea; padding: 5px; font-weight: bold;")
+        self.status_label.setText("⏳ Uploading...")
+        self.status_label.setStyleSheet("""
+            color: #667eea; 
+            padding: 10px;
+            font-weight: bold;
+            font-size: 14px;
+        """)
         
         # Create and start upload thread
         self.upload_thread = UploadThread(self.api_client, self.selected_file)
@@ -194,18 +300,48 @@ class UploadWidget(QWidget):
         self.progress_bar.setVisible(False)
         self.upload_btn.setEnabled(True)
         
-        message = f"Successfully uploaded {result.get('message', 'file')}"
+        message = f"✅ Successfully uploaded {result.get('message', 'file')}"
         self.status_label.setText(message)
-        self.status_label.setStyleSheet("color: #48bb78; padding: 5px; font-weight: bold;")
+        self.status_label.setStyleSheet("""
+            color: #48bb78; 
+            padding: 10px;
+            font-weight: bold;
+            font-size: 14px;
+        """)
         
-        # Show success message
-        QMessageBox.information(
-            self,
-            "Upload Successful",
-            f"File uploaded successfully!\n\n"
+        # Show success message with dark theme styling
+        msg_box = QMessageBox(self)
+        msg_box.setIcon(QMessageBox.Information)
+        msg_box.setWindowTitle("Upload Successful")
+        msg_box.setText("File uploaded successfully!")
+        msg_box.setInformativeText(
             f"Dataset ID: {result.get('dataset_id')}\n"
             f"Items processed: {result.get('summary', {}).get('total_equipment_count', 0)}"
         )
+        msg_box.setStyleSheet("""
+            QMessageBox {
+                background: #1a1a1a;
+                color: #ffffff;
+            }
+            QMessageBox QLabel {
+                color: #ffffff;
+                background: #1a1a1a;
+                font-size: 13px;
+            }
+            QMessageBox QPushButton {
+                background: #667eea;
+                color: #ffffff;
+                border: none;
+                border-radius: 6px;
+                padding: 8px 20px;
+                font-weight: bold;
+                min-width: 80px;
+            }
+            QMessageBox QPushButton:hover {
+                background: #5568d3;
+            }
+        """)
+        msg_box.exec_()
         
         # Emit signal for parent to handle
         self.upload_success.emit(result)
@@ -220,11 +356,40 @@ class UploadWidget(QWidget):
         self.progress_bar.setVisible(False)
         self.upload_btn.setEnabled(True)
         
-        self.status_label.setText("Upload failed")
-        self.status_label.setStyleSheet("color: #c53030; padding: 5px; font-weight: bold;")
+        self.status_label.setText("❌ Upload failed")
+        self.status_label.setStyleSheet("""
+            color: #ff4444; 
+            padding: 10px;
+            font-weight: bold;
+            font-size: 14px;
+        """)
         
-        QMessageBox.critical(
-            self,
-            "Upload Error",
-            f"Failed to upload file:\n\n{error_msg}"
-        )
+        msg_box = QMessageBox(self)
+        msg_box.setIcon(QMessageBox.Critical)
+        msg_box.setWindowTitle("Upload Error")
+        msg_box.setText("Failed to upload file:")
+        msg_box.setInformativeText(error_msg)
+        msg_box.setStyleSheet("""
+            QMessageBox {
+                background: #1a1a1a;
+                color: #ffffff;
+            }
+            QMessageBox QLabel {
+                color: #ffffff;
+                background: #1a1a1a;
+                font-size: 13px;
+            }
+            QMessageBox QPushButton {
+                background: #ff4444;
+                color: #ffffff;
+                border: none;
+                border-radius: 6px;
+                padding: 8px 20px;
+                font-weight: bold;
+                min-width: 80px;
+            }
+            QMessageBox QPushButton:hover {
+                background: #cc0000;
+            }
+        """)
+        msg_box.exec_()

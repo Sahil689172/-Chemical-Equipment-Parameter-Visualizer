@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import (
     QPushButton, QLabel, QMessageBox
 )
 from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtGui import QFont
 from datetime import datetime
 
 
@@ -24,14 +25,41 @@ class HistoryWidget(QWidget):
     
     def init_ui(self):
         layout = QVBoxLayout()
-        layout.setSpacing(10)
+        layout.setSpacing(15)
+        layout.setContentsMargins(20, 20, 20, 20)
+        
+        # Set dark background
+        self.setStyleSheet("background-color: #0f0f0f;")
         
         # Header
         header_layout = QHBoxLayout()
-        title = QLabel("Dataset History")
-        title.setStyleSheet("font-size: 18px; font-weight: bold; color: #2d3748;")
+        title = QLabel("📚 Dataset History")
+        title.setStyleSheet("""
+            font-size: 22px; 
+            font-weight: bold; 
+            color: #ffffff;
+            padding: 10px;
+        """)
         header_layout.addWidget(title)
         header_layout.addStretch()
+        
+        # Delete button
+        delete_btn = QPushButton("🗑️ Delete")
+        delete_btn.setStyleSheet("""
+            QPushButton {
+                padding: 6px 15px;
+                background: #ff4444;
+                color: white;
+                border: none;
+                border-radius: 6px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background: #cc0000;
+            }
+        """)
+        delete_btn.clicked.connect(self.delete_selected_dataset)
+        header_layout.addWidget(delete_btn)
         
         refresh_btn = QPushButton("Refresh")
         refresh_btn.setStyleSheet("""
@@ -55,20 +83,27 @@ class HistoryWidget(QWidget):
         self.list_widget = QListWidget()
         self.list_widget.setStyleSheet("""
             QListWidget {
-                border: 1px solid #e2e8f0;
+                border: 2px solid #666666;
                 border-radius: 8px;
-                background: white;
+                background: #2a2a2a;
+                color: #ffffff;
             }
             QListWidget::item {
-                padding: 12px;
-                border-bottom: 1px solid #e2e8f0;
+                padding: 15px;
+                border-bottom: 1px solid #4a4a4a;
+                background: #353535;
+                border-radius: 6px;
+                margin: 3px;
+                color: #ffffff;
             }
             QListWidget::item:selected {
-                background: #e6fffa;
-                color: #2d3748;
+                background: rgba(102, 126, 234, 0.7);
+                color: #ffffff;
+                border: 2px solid #667eea;
             }
             QListWidget::item:hover {
-                background: #f7fafc;
+                background: rgba(102, 126, 234, 0.4);
+                color: #ffffff;
             }
         """)
         self.list_widget.itemDoubleClicked.connect(self.on_item_double_clicked)
@@ -78,10 +113,12 @@ class HistoryWidget(QWidget):
         # Info label
         self.info_label = QLabel("No datasets available")
         self.info_label.setStyleSheet("""
-            color: #718096;
-            padding: 10px;
-            background: #f7fafc;
-            border-radius: 6px;
+            color: #ffffff;
+            padding: 15px;
+            background: #353535;
+            border: 2px solid #666666;
+            border-radius: 8px;
+            font-size: 13px;
         """)
         layout.addWidget(self.info_label)
         
@@ -93,11 +130,33 @@ class HistoryWidget(QWidget):
             self.datasets = self.api_client.get_datasets()
             self.update_list()
         except Exception as e:
-            QMessageBox.warning(
-                self,
-                "Error",
-                f"Failed to load datasets:\n{str(e)}"
-            )
+            msg_box = QMessageBox(self)
+            msg_box.setIcon(QMessageBox.Warning)
+            msg_box.setWindowTitle("Error")
+            msg_box.setText("Failed to load datasets:")
+            msg_box.setInformativeText(str(e))
+            msg_box.setStyleSheet("""
+                QMessageBox {
+                    background: #1a1a1a;
+                    color: #ffffff;
+                }
+                QMessageBox QLabel {
+                    color: #ffffff;
+                    background: #1a1a1a;
+                }
+                QMessageBox QPushButton {
+                    background: #667eea;
+                    color: #ffffff;
+                    border: none;
+                    border-radius: 6px;
+                    padding: 8px 20px;
+                    font-weight: bold;
+                }
+                QMessageBox QPushButton:hover {
+                    background: #5568d3;
+                }
+            """)
+            msg_box.exec_()
     
     def update_list(self):
         """Update the list widget with current datasets"""
@@ -125,12 +184,14 @@ class HistoryWidget(QWidget):
             summary = dataset.get('summary', {})
             item_count = summary.get('total_equipment_count', 0)
             
-            # Create list item
-            item_text = f"{dataset.get('filename', 'Unknown')}\n"
-            item_text += f"{item_count} items • {time_ago}"
+            # Create list item with better formatting
+            filename = dataset.get('filename', 'Unknown')
+            item_text = f"📄 {filename}\n"
+            item_text += f"   📊 {item_count} items  •  🕒 {time_ago}"
             
             item = QListWidgetItem(item_text)
             item.setData(Qt.UserRole, dataset.get('id'))
+            item.setFont(QFont("Segoe UI", 11))
             self.list_widget.addItem(item)
     
     def format_time_ago(self, dt: datetime) -> str:
@@ -168,28 +229,134 @@ class HistoryWidget(QWidget):
         """Delete the selected dataset"""
         current_item = self.list_widget.currentItem()
         if not current_item:
-            QMessageBox.warning(self, "No Selection", "Please select a dataset to delete.")
+            msg_box = QMessageBox(self)
+            msg_box.setIcon(QMessageBox.Warning)
+            msg_box.setWindowTitle("No Selection")
+            msg_box.setText("Please select a dataset to delete.")
+            msg_box.setStyleSheet("""
+                QMessageBox {
+                    background: #1a1a1a;
+                    color: #ffffff;
+                }
+                QMessageBox QLabel {
+                    color: #ffffff;
+                    background: #1a1a1a;
+                }
+                QMessageBox QPushButton {
+                    background: #667eea;
+                    color: #ffffff;
+                    border: none;
+                    border-radius: 6px;
+                    padding: 8px 20px;
+                    font-weight: bold;
+                }
+                QMessageBox QPushButton:hover {
+                    background: #5568d3;
+                }
+            """)
+            msg_box.exec_()
             return
         
         dataset_id = current_item.data(Qt.UserRole)
         if not dataset_id:
             return
         
-        # Confirm deletion
-        reply = QMessageBox.question(
-            self,
-            "Confirm Delete",
-            f"Are you sure you want to delete this dataset?\n\n"
-            f"This action cannot be undone.",
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No
-        )
+        # Confirm deletion with styled dialog
+        msg_box = QMessageBox(self)
+        msg_box.setIcon(QMessageBox.Question)
+        msg_box.setWindowTitle("Confirm Delete")
+        msg_box.setText("Are you sure you want to delete this dataset?")
+        msg_box.setInformativeText("This action cannot be undone.")
+        msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        msg_box.setDefaultButton(QMessageBox.No)
+        msg_box.setStyleSheet("""
+            QMessageBox {
+                background: #1a1a1a;
+                color: #ffffff;
+            }
+            QMessageBox QLabel {
+                color: #ffffff;
+                background: #1a1a1a;
+            }
+            QMessageBox QPushButton {
+                background: #667eea;
+                color: #ffffff;
+                border: none;
+                border-radius: 6px;
+                padding: 8px 20px;
+                font-weight: bold;
+                min-width: 80px;
+            }
+            QMessageBox QPushButton:hover {
+                background: #5568d3;
+            }
+            QMessageBox QPushButton[text="&Yes"] {
+                background: #ff4444;
+            }
+            QMessageBox QPushButton[text="&Yes"]:hover {
+                background: #cc0000;
+            }
+        """)
+        reply = msg_box.exec_()
         
         if reply == QMessageBox.Yes:
             try:
                 self.api_client.delete_dataset(dataset_id)
                 self.dataset_deleted.emit(dataset_id)
                 self.load_datasets()  # Refresh list
-                QMessageBox.information(self, "Success", "Dataset deleted successfully.")
+                
+                # Success message
+                success_box = QMessageBox(self)
+                success_box.setIcon(QMessageBox.Information)
+                success_box.setWindowTitle("Success")
+                success_box.setText("Dataset deleted successfully.")
+                success_box.setStyleSheet("""
+                    QMessageBox {
+                        background: #1a1a1a;
+                        color: #ffffff;
+                    }
+                    QMessageBox QLabel {
+                        color: #ffffff;
+                        background: #1a1a1a;
+                    }
+                    QMessageBox QPushButton {
+                        background: #48bb78;
+                        color: #ffffff;
+                        border: none;
+                        border-radius: 6px;
+                        padding: 8px 20px;
+                        font-weight: bold;
+                    }
+                    QMessageBox QPushButton:hover {
+                        background: #38a169;
+                    }
+                """)
+                success_box.exec_()
             except Exception as e:
-                QMessageBox.critical(self, "Error", f"Failed to delete dataset:\n{str(e)}")
+                error_box = QMessageBox(self)
+                error_box.setIcon(QMessageBox.Critical)
+                error_box.setWindowTitle("Error")
+                error_box.setText("Failed to delete dataset:")
+                error_box.setInformativeText(str(e))
+                error_box.setStyleSheet("""
+                    QMessageBox {
+                        background: #1a1a1a;
+                        color: #ffffff;
+                    }
+                    QMessageBox QLabel {
+                        color: #ffffff;
+                        background: #1a1a1a;
+                    }
+                    QMessageBox QPushButton {
+                        background: #ff4444;
+                        color: #ffffff;
+                        border: none;
+                        border-radius: 6px;
+                        padding: 8px 20px;
+                        font-weight: bold;
+                    }
+                    QMessageBox QPushButton:hover {
+                        background: #cc0000;
+                    }
+                """)
+                error_box.exec_()

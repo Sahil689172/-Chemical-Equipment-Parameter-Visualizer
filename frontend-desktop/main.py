@@ -29,30 +29,97 @@ class MainWindow(QMainWindow):
     
     def init_ui(self):
         self.setWindowTitle("Chemical Equipment Parameter Visualizer")
-        self.setGeometry(100, 100, 1400, 900)
+        self.setGeometry(100, 100, 1600, 1000)
         
-        # Set application style
+        # Set application style with dark theme
         self.setStyleSheet("""
             QMainWindow {
-                background: #f7fafc;
+                background: #000000;
+            }
+            QMenuBar {
+                background: #1a1a1a;
+                color: #ffffff;
+                border-bottom: 1px solid #333333;
+            }
+            QMenuBar::item {
+                padding: 8px 15px;
+                background: transparent;
+            }
+            QMenuBar::item:selected {
+                background: #333333;
+            }
+            QMenu {
+                background: #1a1a1a;
+                color: #ffffff;
+                border: 1px solid #333333;
+            }
+            QMenu::item:selected {
+                background: #667eea;
+            }
+            QToolBar {
+                background: #1a1a1a;
+                border: none;
+                spacing: 5px;
+            }
+            QToolBar QToolButton {
+                background: #0f0f0f;
+                color: #ffffff;
+                border: 1px solid #333333;
+                border-radius: 6px;
+                padding: 8px 15px;
+            }
+            QToolBar QToolButton:hover {
+                background: #667eea;
+                border-color: #667eea;
+            }
+            QStatusBar {
+                background: #1a1a1a;
+                color: #ffffff;
+                border-top: 1px solid #333333;
             }
             QTabWidget::pane {
-                border: 1px solid #e2e8f0;
+                border: 2px solid #666666;
                 border-radius: 8px;
-                background: white;
+                background: #1a1a1a;
             }
             QTabBar::tab {
-                background: #edf2f7;
-                color: #4a5568;
-                padding: 10px 20px;
+                background: #2a2a2a;
+                color: #cccccc;
+                padding: 12px 25px;
                 margin-right: 2px;
                 border-top-left-radius: 8px;
                 border-top-right-radius: 8px;
+                border: 2px solid #555555;
             }
             QTabBar::tab:selected {
-                background: white;
-                color: #2d3748;
+                background: #1a1a1a;
+                color: #ffffff;
                 font-weight: bold;
+                border-bottom: 3px solid #667eea;
+                border-color: #888888;
+            }
+            QTabBar::tab:hover {
+                background: #404040;
+                color: #ffffff;
+            }
+            QMessageBox {
+                background: #1a1a1a;
+                color: #ffffff;
+            }
+            QMessageBox QLabel {
+                color: #ffffff;
+                background: #1a1a1a;
+            }
+            QMessageBox QPushButton {
+                background: #667eea;
+                color: #ffffff;
+                border: none;
+                border-radius: 6px;
+                padding: 8px 20px;
+                font-weight: bold;
+            }
+            QMessageBox QPushButton:hover {
+                background: #5568d3;
             }
         """)
         
@@ -62,8 +129,13 @@ class MainWindow(QMainWindow):
         # Create toolbar
         self.create_toolbar()
         
-        # Create status bar
+        # Create status bar with connection indicator
         self.statusBar().showMessage("Ready")
+        self.statusBar().setStyleSheet("""
+            QStatusBar {
+                color: #ffffff;
+            }
+        """)
         
         # Create central widget with tabs
         self.create_tabs()
@@ -107,19 +179,29 @@ class MainWindow(QMainWindow):
     
     def create_toolbar(self):
         """Create toolbar"""
-        toolbar = QToolBar()
+        toolbar = QToolBar("Main Toolbar")
         toolbar.setMovable(False)
+        toolbar.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         self.addToolBar(toolbar)
         
-        upload_action = QAction('Upload', self)
+        upload_action = QAction('📤 Upload CSV', self)
+        upload_action.setToolTip('Upload a new CSV file (Ctrl+U)')
         upload_action.triggered.connect(self.on_upload_action)
         toolbar.addAction(upload_action)
         
         toolbar.addSeparator()
         
-        refresh_action = QAction('Refresh', self)
+        refresh_action = QAction('🔄 Refresh', self)
+        refresh_action.setToolTip('Refresh all data (F5)')
         refresh_action.triggered.connect(self.refresh_all)
         toolbar.addAction(refresh_action)
+        
+        toolbar.addSeparator()
+        
+        charts_action = QAction('📊 View Charts', self)
+        charts_action.setToolTip('Switch to Charts tab')
+        charts_action.triggered.connect(lambda: self.tabs.setCurrentIndex(3))
+        toolbar.addAction(charts_action)
     
     def create_tabs(self):
         """Create tab widget with all tabs"""
@@ -160,13 +242,36 @@ class MainWindow(QMainWindow):
         
         # Test API connection
         if not self.api_client.test_connection():
-            QMessageBox.warning(
-                self,
-                "Connection Warning",
-                "Cannot connect to the backend API.\n"
+            msg_box = QMessageBox(self)
+            msg_box.setIcon(QMessageBox.Warning)
+            msg_box.setWindowTitle("Connection Warning")
+            msg_box.setText("Cannot connect to the backend API.")
+            msg_box.setInformativeText(
                 "Please make sure the Django server is running on http://localhost:8000\n\n"
                 "You can still use the application, but API features will not work."
             )
+            msg_box.setStyleSheet("""
+                QMessageBox {
+                    background: #1a1a1a;
+                    color: #ffffff;
+                }
+                QMessageBox QLabel {
+                    color: #ffffff;
+                    background: #1a1a1a;
+                }
+                QMessageBox QPushButton {
+                    background: #667eea;
+                    color: #ffffff;
+                    border: none;
+                    border-radius: 6px;
+                    padding: 8px 20px;
+                    font-weight: bold;
+                }
+                QMessageBox QPushButton:hover {
+                    background: #5568d3;
+                }
+            """)
+            msg_box.exec_()
     
     def on_upload_action(self):
         """Switch to upload tab"""
@@ -209,11 +314,33 @@ class MainWindow(QMainWindow):
             self.chart_widget.load_data(chart_data, equipment_items)
             
         except Exception as e:
-            QMessageBox.critical(
-                self,
-                "Error",
-                f"Failed to load dataset data:\n{str(e)}"
-            )
+            msg_box = QMessageBox(self)
+            msg_box.setIcon(QMessageBox.Critical)
+            msg_box.setWindowTitle("Error")
+            msg_box.setText("Failed to load dataset data:")
+            msg_box.setInformativeText(str(e))
+            msg_box.setStyleSheet("""
+                QMessageBox {
+                    background: #1a1a1a;
+                    color: #ffffff;
+                }
+                QMessageBox QLabel {
+                    color: #ffffff;
+                    background: #1a1a1a;
+                }
+                QMessageBox QPushButton {
+                    background: #ff4444;
+                    color: #ffffff;
+                    border: none;
+                    border-radius: 6px;
+                    padding: 8px 20px;
+                    font-weight: bold;
+                }
+                QMessageBox QPushButton:hover {
+                    background: #cc0000;
+                }
+            """)
+            msg_box.exec_()
     
     def refresh_all(self):
         """Refresh all data"""
@@ -224,13 +351,35 @@ class MainWindow(QMainWindow):
     
     def show_about(self):
         """Show about dialog"""
-        QMessageBox.about(
-            self,
-            "About Chemical Equipment Parameter Visualizer",
-            "Chemical Equipment Parameter Visualizer v1.0\n\n"
+        msg_box = QMessageBox(self)
+        msg_box.setWindowTitle("About Chemical Equipment Parameter Visualizer")
+        msg_box.setText("Chemical Equipment Parameter Visualizer v1.0")
+        msg_box.setInformativeText(
             "A desktop application for visualizing chemical equipment parameters.\n\n"
             "Built with PyQt5 and Matplotlib."
         )
+        msg_box.setStyleSheet("""
+            QMessageBox {
+                background: #1a1a1a;
+                color: #ffffff;
+            }
+            QMessageBox QLabel {
+                color: #ffffff;
+                background: #1a1a1a;
+            }
+            QMessageBox QPushButton {
+                background: #667eea;
+                color: #ffffff;
+                border: none;
+                border-radius: 6px;
+                padding: 8px 20px;
+                font-weight: bold;
+            }
+            QMessageBox QPushButton:hover {
+                background: #5568d3;
+            }
+        """)
+        msg_box.exec_()
 
 
 def main():

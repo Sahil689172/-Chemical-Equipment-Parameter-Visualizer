@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import (
     QHeaderView, QLabel, QHBoxLayout, QPushButton
 )
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QColor
 
 
 class TableWidget(QWidget):
@@ -20,12 +20,21 @@ class TableWidget(QWidget):
     
     def init_ui(self):
         layout = QVBoxLayout()
-        layout.setSpacing(10)
+        layout.setSpacing(15)
+        layout.setContentsMargins(20, 20, 20, 20)
+        
+        # Set dark background - different from table background
+        self.setStyleSheet("background-color: #000000;")
         
         # Header
         header_layout = QHBoxLayout()
-        title = QLabel("Equipment Data")
-        title.setStyleSheet("font-size: 18px; font-weight: bold; color: #2d3748;")
+        title = QLabel("📊 Equipment Data")
+        title.setStyleSheet("""
+            font-size: 22px; 
+            font-weight: bold; 
+            color: #ffffff;
+            padding: 10px;
+        """)
         header_layout.addWidget(title)
         header_layout.addStretch()
         
@@ -58,27 +67,42 @@ class TableWidget(QWidget):
             "Temperature (°C)"
         ])
         
-        # Style the table
+        # Style the table with dark theme - ensuring maximum contrast
         self.table.setStyleSheet("""
             QTableWidget {
-                border: 1px solid #e2e8f0;
+                border: 3px solid #888888;
                 border-radius: 8px;
-                background: white;
-                gridline-color: #e2e8f0;
+                background: #1a1a1a;
+                gridline-color: #666666;
+                color: #ffffff;
+                selection-background-color: rgba(102, 126, 234, 0.8);
+                alternate-background-color: #2d2d2d;
             }
             QTableWidget::item {
-                padding: 8px;
+                padding: 12px;
+                border-bottom: 2px solid #555555;
+                background: #1a1a1a;
+                color: #ffffff;
+            }
+            QTableWidget::item:alternate {
+                background: #2d2d2d;
+                color: #ffffff;
             }
             QTableWidget::item:selected {
-                background: #e6fffa;
-                color: #2d3748;
+                background: rgba(102, 126, 234, 0.9);
+                color: #ffffff;
+            }
+            QTableWidget::item:hover {
+                background: rgba(102, 126, 234, 0.5);
+                color: #ffffff;
             }
             QHeaderView::section {
-                background: #667eea;
-                color: white;
-                padding: 10px;
-                border: none;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: #ffffff;
+                padding: 14px;
+                border: 2px solid #aaaaaa;
                 font-weight: bold;
+                font-size: 13px;
             }
         """)
         
@@ -89,15 +113,25 @@ class TableWidget(QWidget):
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.table.verticalHeader().setVisible(False)
         
+        # Force white text color for all table items
+        self.table.setStyleSheet(self.table.styleSheet() + """
+            QTableWidget::item {
+                color: #ffffff !important;
+            }
+        """)
+        
         layout.addWidget(self.table)
         
         # Statistics label
         self.stats_label = QLabel("No data loaded")
         self.stats_label.setStyleSheet("""
-            color: #718096;
-            padding: 10px;
-            background: #f7fafc;
-            border-radius: 6px;
+            color: #ffffff;
+            padding: 15px;
+            background: #2d2d2d;
+            border: 3px solid #888888;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
         """)
         layout.addWidget(self.stats_label)
         
@@ -120,11 +154,29 @@ class TableWidget(QWidget):
             pressure = float(item.get('pressure', 0))
             temperature = float(item.get('temperature', 0))
             
-            self.table.setItem(row, 0, QTableWidgetItem(name))
-            self.table.setItem(row, 1, QTableWidgetItem(eq_type))
-            self.table.setItem(row, 2, QTableWidgetItem(f"{flowrate:.2f}"))
-            self.table.setItem(row, 3, QTableWidgetItem(f"{pressure:.2f}"))
-            self.table.setItem(row, 4, QTableWidgetItem(f"{temperature:.2f}"))
+            # Create items with explicit bright white text color for maximum contrast
+            # Use RGB values for pure white to ensure maximum visibility
+            white_color = QColor(255, 255, 255)
+            
+            item0 = QTableWidgetItem(name)
+            item0.setForeground(white_color)
+            self.table.setItem(row, 0, item0)
+            
+            item1 = QTableWidgetItem(eq_type)
+            item1.setForeground(white_color)
+            self.table.setItem(row, 1, item1)
+            
+            item2 = QTableWidgetItem(f"{flowrate:.2f}")
+            item2.setForeground(white_color)
+            self.table.setItem(row, 2, item2)
+            
+            item3 = QTableWidgetItem(f"{pressure:.2f}")
+            item3.setForeground(white_color)
+            self.table.setItem(row, 3, item3)
+            
+            item4 = QTableWidgetItem(f"{temperature:.2f}")
+            item4.setForeground(white_color)
+            self.table.setItem(row, 4, item4)
         
         # Update statistics
         if self.equipment_data:

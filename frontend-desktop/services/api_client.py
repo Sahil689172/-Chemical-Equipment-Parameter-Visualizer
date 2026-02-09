@@ -100,7 +100,7 @@ class APIClient:
             Chart data dictionary
         """
         response = requests.get(
-            f"{self.base_url}/datasets/{dataset_id}/chart-data/",
+            f"{self.base_url}/datasets/{dataset_id}/chart_data/",
             timeout=self.timeout
         )
         response.raise_for_status()
